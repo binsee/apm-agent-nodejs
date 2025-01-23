@@ -7,14 +7,9 @@ name: edge
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - '**/**.md'
-      - '**/**.asciidoc'
-      - 'docs/**'
-      - 'examples/**'
+  schedule:
+    # Every Monday & Thursday at 6:00 AM
+    - cron: '0 6 * * 1,4'
 
 # limit the access of the generated GITHUB_TOKEN
 permissions:
@@ -32,18 +27,15 @@ jobs:
   # made, these will stop and there will be no value in testing v17 nightlies.
   #
   test-nightly:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        node: [ "21" ]
-        contextManager: [ 'patch', '' ]
+        node: [ "23" ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: .ci/scripts/test.sh -b "nightly" "${{ matrix.node }}"
-        env:
-          ELASTIC_APM_CONTEXT_MANAGER: ${{ matrix.contextManager }}
 
   # This should list all the Node.js major versions listed at
   # https://nodejs.org/en/about/releases/, plus the next version (for which
@@ -52,21 +44,18 @@ jobs:
   # The node.js project *sometimes* produces "rc" builds leading up to a new
   # release. They get uploaded to: https://nodejs.org/download/rc/
   test-rc:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         node:
-          - "21"
+          - "23"
+          - "22"
           - "20"
-          - "19"
           - "18"
-          - "16"
-        contextManager: [ 'patch', '' ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - run: .ci/scripts/test.sh -b "rc" "${{ matrix.node }}"
         env:
           VERSION: ${{ matrix.node }}
-          ELASTIC_APM_CONTEXT_MANAGER: ${{ matrix.contextManager }}

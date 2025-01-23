@@ -4,9 +4,9 @@
  * compliance with the BSD 2-Clause License.
  */
 
-'use strict'
+'use strict';
 
-var semver = require('semver')
+var semver = require('semver');
 
 /**
  * Return whether the current 'fastify' version is incompatible with the
@@ -24,25 +24,44 @@ var semver = require('semver')
  *
  * @returns {string | boolean}
  */
-function isFastifyIncompat () {
-  const nodeVer = process.version
-  const fastifyVer = require('fastify/package.json').version
-  const msg = `fastify@${fastifyVer} is incompatible with node@${nodeVer}`
+function isFastifyIncompat() {
+  const nodeVer = process.version;
+  const fastifyVer = require('fastify/package.json').version;
+  const msg = `fastify@${fastifyVer} is incompatible with node@${nodeVer}`;
 
-  if (semver.satisfies(fastifyVer, '1.x') && !semver.satisfies(nodeVer, '>=6 <12')) {
-    return msg
+  if (
+    semver.satisfies(fastifyVer, '1.x') &&
+    !semver.satisfies(nodeVer, '>=6 <12')
+  ) {
+    return msg;
   }
-  if (semver.satisfies(fastifyVer, '2.x') && !semver.satisfies(nodeVer, '>=6 <15')) {
-    return msg
+  if (
+    semver.satisfies(fastifyVer, '2.x') &&
+    !semver.satisfies(nodeVer, '>=6 <15')
+  ) {
+    return msg;
   }
-  if (semver.satisfies(fastifyVer, '3.x') && !semver.satisfies(nodeVer, '>=10')) {
-    return msg
+  if (
+    semver.satisfies(fastifyVer, '3.x') &&
+    !semver.satisfies(nodeVer, '>=10')
+  ) {
+    return msg;
   }
-  if (semver.satisfies(fastifyVer, '4.x') && !semver.satisfies(nodeVer, '>=14.6.0')) {
-    return msg
+  if (
+    semver.satisfies(fastifyVer, '4.x') &&
+    !semver.satisfies(nodeVer, '>=14.18.0')
+  ) {
+    return msg;
+  }
+  // https://fastify.dev/docs/latest/Guides/Migration-Guide-V5/#long-term-support-cycle
+  if (
+    semver.satisfies(fastifyVer, '5.x') &&
+    !semver.satisfies(nodeVer, '>=20')
+  ) {
+    return msg;
   }
 
-  return false
+  return false;
 }
 
-module.exports = isFastifyIncompat
+module.exports = isFastifyIncompat;

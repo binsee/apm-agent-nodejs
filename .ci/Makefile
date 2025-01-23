@@ -1,10 +1,7 @@
 SHELL = /bin/bash -eo pipefail
 MAKEFLAGS += --no-print-directory
 AWS_FOLDER = ../build/aws
-DIST_DIR = /build/dist/nodejs
 LAMBDA_LAYER_ZIP_FILE = ../build/dist/elastic-apm-node-lambda-layer.zip
-DOCKER_IMAGE_NAME = observability/apm-agent-nodejs
-DOCKER_REGISTRY = docker.elastic.co
 SUFFIX_ARN_FILE = arn-file.md
 AGENT_VERSION = $(subst v,,$(GITHUB_REF_NAME))
 MAJOR_VERSION = $(shell cut -d '.' -f 1 <<< $(AGENT_VERSION))
@@ -35,14 +32,6 @@ clean:
 env:
 	@env | sort
 
-# Create Docker image
-build-docker: validate-version
-	docker build -t $(DOCKER_REGISTRY)/$(DOCKER_IMAGE_NAME):$(AGENT_VERSION) \
-  --build-arg AGENT_DIR=$(DIST_DIR) ..
-
-push-docker: build-docker
-	../dev-utils/push-docker.sh $(DOCKER_REGISTRY) $(DOCKER_IMAGE_NAME) $(AGENT_VERSION)
-
 # List all the AWS regions
 get-all-aws-regions:
 	@mkdir -p $(AWS_FOLDER)
@@ -68,10 +57,11 @@ publish: validate-layer-name validate-aws-default-region
 	@aws lambda \
 		--output json \
 		publish-layer-version \
+		--region="$(AWS_DEFAULT_REGION)" \
 		--layer-name "$(ELASTIC_LAYER_NAME)" \
 		--description "AWS Lambda Extension Layer for the Elastic APM Node.js Agent" \
 		--license "Apache-2.0" \
-		--compatible-runtimes nodejs18.x nodejs16.x nodejs14.x nodejs12.x nodejs10.x \
+		--compatible-runtimes nodejs20.x nodejs18.x nodejs16.x nodejs14.x \
 		--zip-file "fileb://./$(AWS_FOLDER)/elastic-apm-node-lambda-layer-$(GITHUB_REF_NAME).zip"
 
 # Grant public access to the given LAYER in the given AWS region
@@ -80,6 +70,7 @@ grant-public-layer-access: validate-layer-name validate-aws-default-region
 	@aws lambda \
 		--output json \
 		add-layer-version-permission \
+		--region="$(AWS_DEFAULT_REGION)" \
 		--layer-name "$(ELASTIC_LAYER_NAME)" \
 		--action lambda:GetLayerVersion \
 		--principal '*' \
@@ -97,17 +88,7 @@ create-arn-file: validate-release-notes-url
 	@RELEASE_NOTES_URL=$(RELEASE_NOTES_URL) ./scripts/create-arn-table.sh
 
 github-release: validate-ref-name
-	@gh release list
-	@gh \
-		release \
-		create $(GITHUB_REF_NAME) \
-		--title '$(GITHUB_REF_NAME)' \
-		--notes-file $(AWS_FOLDER)/$(SUFFIX_ARN_FILE)
-
-validate-version:
-ifndef AGENT_VERSION
-	$(error AGENT_VERSION is undefined)
-endif
+	../dev-utils/github-release.sh "$(GITHUB_REF_NAME)" "$(AWS_FOLDER)/$(SUFFIX_ARN_FILE)"
 
 validate-ref-name:
 ifndef GITHUB_REF_NAME

@@ -6,7 +6,7 @@ endif::[]
 ////
 Notes:
 1. When adding a changelog entry, if the "Unreleased" section doesn't yet exist,
-   please add the following under the "=== Node.js Agent version 3.x" header:
+   please add the following under the "=== Node.js Agent version 4.x" header:
 
         ==== Unreleased
 
@@ -28,14 +28,555 @@ Notes:
         ==== x.x.x - YYYY/MM/DD
 ////
 
-[[release-notes-3.x]]
-=== Node.js Agent version 3.x
+[[release-notes-4.x]]
+=== Node.js Agent version 4.x
+
+See the <<upgrade-to-v4>> guide.
+
+[[release-notes-4.11.0]]
+==== 4.11.0 - 2025/01/20
+
+[float]
+===== Features
+
+* Support instrumentation of Azure Functions using the https://learn.microsoft.com/en-ca/azure/azure-functions/functions-node-upgrade-v4[v4 Node.js programming model].
+  ({pull}4426[#4426])
+
+[float]
+===== Bug fixes
+
+* Fix instrumentation of `@aws-sdk/client-s3`, `@aws-sdk/client-sqs`, and
+  `@aws-sdk/client-sns` for versions 3.723.0 and later. Internally the AWS SDK
+  clients updated to `@smithy/smithy-client@4`. ({pull}4398[#4398])
 
 
-==== Unreleased
+[[release-notes-4.10.0]]
+==== 4.10.0 - 2024/12/24
+
+[float]
+===== Features
+
+* Improve trace-level logging to better support debugging central config
+  and transaction sampling issues. ({issues}4291[#4291])
+
+
+[[release-notes-4.9.0]]
+==== 4.9.0 - 2024/12/09
+
+[float]
+===== Features
+
+* Add support for `undici` v7. ({pull}4336[#4336])
+
+[float]
+===== Bug fixes
+
+* Fix to support a internal refactor in `mysql2` v3.11.5. ({pull}4334[#4334])
+* Guard against a possible encoding error of tracing data in the APM client,
+  before it is sent. It is *possible* this could wedge the APM client,
+  resulting in the APM agent no longer sending tracing data.
+  ({pull}4359[#4359])
+
+
+
+[[release-notes-4.8.1]]
+==== 4.8.1 - 2024/11/04
+
+[float]
+===== Bug fixes
+
+* Fix AWS Lambda instrumentation to work with a "handler" string that includes
+  a period (`.`) in the module path. E.g. the leading `.` in `Handler: ./src/functions/myfunc/handler.main`. ({issues}4293[#4293]).
+
+
+[[release-notes-4.8.0]]
+==== 4.8.0 - 2024/10/08
+
+[float]
+===== Features
+
+- Minor improvement to container ID parsing from /etc/cgroup v1 files in
+  AWS ECS Fargate, where the pattern has been observed to sometimes differ
+  from the documented pattern. (https://github.com/elastic/apm/issues/888[APM spec issue #888])
+
+- Add support for `tedious` v19. ({issues}4218[#4218])
+
+- Add support for `koa-router` v13. ({pull}4236[#4236])
+
+
+[float]
+===== Bug fixes
+
+- Update `cookie` to version `v0.7.2` to fix security issue [CVE-2024-47764](https://github.com/advisories/GHSA-pxg6-pf52-xh8x)
+
+[[release-notes-4.7.3]]
+==== 4.7.3 - 2024/08/09
+
+[float]
+===== Bug fixes
+
+* Update import-in-the-middle to 1.11.0, which fixes https://github.com/nodejs/import-in-the-middle/issues/144[an issue]
+  that can crash users using Nuxt and ESM. ({pull}4175[#4175])
+
+
+[[release-notes-4.7.2]]
+==== 4.7.2 - 2024/08/01
+
+[float]
+===== Features
+
+* Support hooking built-in Node.js modules loaded via https://nodejs.org/api/all.html#all_process_processgetbuiltinmoduleid[`process.getBuiltinModule`], added in v22.3.0. ({pull}4160[#4160])
+
+[float]
+===== Bug fixes
+
+* Fix for instrumentation for `@aws-sdk/sns-client` that will prevent a crash
+  if the client is used when there is no parent transaction present. ({pull}4168[#4168])
+
+* Fix for config resolution process. Before this change falsy config options coming
+  from the `elastic-apm-node.js` file were ignored. ({pull}4119[#4119])
+
+* Fix publishing of AWS Lambda layer to all AWS regions. This was broken in
+  the 4.7.1 release. ({issues}4171[#4171])
+
+
+[[release-notes-4.7.1]]
+==== 4.7.1 - 2024/07/24
+
+[float]
+===== Bug fixes
+
+- Update import-in-the-middle internally-used library to v1.9.1. This can
+  fix usage with ESM code (see <<esm>>) in some cases, e.g. usage with
+  https://github.com/elastic/apm-agent-nodejs/issues/4143[Nuxt 3].
+
+
+[[release-notes-4.7.0]]
+==== 4.7.0 - 2024/06/13
+
+[float]
+===== Features
+
+* Update <<opentelemetry-bridge>> support to `@opentelemetry/api` version 1.9.0.
+  ({issues}4078[#4078])
++
+Support for the new `addLink` and `addLinks` methods on Span have been added.
+However, support for the new synchronous gauge have not yet been added.
+
+
+[[release-notes-4.6.0]]
+==== 4.6.0 - 2024/06/05
+
+[float]
+===== Features
+
+* Make published `docker.elastic.co/observability/apm-agent-nodejs` Docker
+  images multi-platform, with support for `linux/amd64,linux/arm64` for now.
+  This is necessary for users of the Elastic APM Attacher for Kubernetes,
+  when deploying to k8s nodes that are ARM64 (e.g. Gravitron on AWS).
+  ({issues}4038[#4038])
+
+[float]
+===== Bug fixes
+
+* Fix instrumentation for recent `@aws-sdk/client-*` releases that use
+  `@smithy/smithy-client` v3. (For example `@aws-sdk/client-s3@3.575.0` released
+  2024-05-13 updated to smithy-client v3.) Before this change the APM agent had
+  been limiting patching of `@smithy/smithy-client` to `>=1 <3`.
+  ({pull}4036[#4036])
+
+* Mark the published AWS Lambda layers as supporting the "nodejs20.x" Lambda
+  Runtime (`--compatible-runtimes`). The "nodejs20.x" runtime was released by
+  AWS on 2023-11-15. ({issues}4033[#4033])
++
+Note that this Node.js APM agent supports Node.js 20.x, so the new AWS Lambda
+runtime was supported when it was released. However, the metadata stating
+compatible runtimes (which is advisory) was not updated until now.
+
+
+[[release-notes-4.5.4]]
+==== 4.5.4 - 2024/05/13
+
+[float]
+===== Bug fixes
+
+* Change how the "cookie" HTTP request header is represented in APM transaction
+  data to avoid a rare, but possible, intake bug where the transaction could be
+  rejected due to a mapping conflict.
++
+Before this change a `Cookie: foo=bar; sessionid=42` HTTP request header
+would be represented in the transaction document in Elasticsearch with these
+document fields (the example assumes <<sanitize-field-names>> matches
+"sessionid", as it does by default):
++
+[source]
+----
+http.request.headers.cookie: "[REDACTED]"
+...
+http.request.cookies.foo: "bar"
+http.request.cookies.sessionid: "[REDACTED]"
+----
++
+After this change it is represented as:
++
+[source]
+----
+http.request.headers.cookie: "foo=bar; sessionid=REDACTED"
+----
++
+In other words, `http.request.cookies` are no longer separated out.
+({issues}4006[#4006])
+
+
+[[release-notes-4.5.3]]
+==== 4.5.3 - 2024/04/23
+
+[float]
+===== Bug fixes
+
+* Fix message handling for tombstone messages in `kafkajs` instrumentation.
+  ({pull}3985[#3985])
+
+
+[[release-notes-4.5.2]]
+==== 4.5.2 - 2024/04/12
+
+[float]
+===== Bug fixes
+
+* Fix path resolution for requests that contain invalid characters in its
+  host header. ({pull}3923[#3923])
+* Fix span names for `getMore` command of mongodb. ({pull}3919[#3919])
+* Fix undici instrumentation to cope with a bug in undici@6.11.0 where
+  `request.addHeader()` was accidentally removed. (It was re-added in
+  undici@6.11.1.) ({pull}3963[#3963])
+* Update undici instrumentation to avoid possibly adding a *second*
+  'traceparent' header to outgoing HTTP requests, because this can break
+  Elasticsearch requests. ({issues}3964[#3964])
+
+
+[[release-notes-4.5.0]]
+==== 4.5.0 - 2024/03/13
+
+[float]
+===== Features
+
+* Update <<opentelemetry-bridge>> support to `@opentelemetry/api` version 1.8.0.
+* Update `tedious` instrumentation to support versions 17 and 18. ({pull}3901[#3901], {pull}3911[#3911])
+* Add new `kafkajs` instrumentation. ({issues}2905[#2905])
+
+[float]
+===== Bug fixes
+
+* Fix instrumentation of mongodb to not break mongodb@6.4.0. Mongodb v6.4.0
+  included changes that resulted in the APM agent's instrumentation breaking it.
+  ({pull}3897[#3897])
+* Fix hostname detection on Windows in some cases (where a powershell profile
+  could break collection). ({pull}3899[#3899])
+* Fix a path normalization issue that broke (or partially broke) instrumentation
+  of some modules on Windows: Next.js, redis v4+, mongodb. ({pull}3905[#3905])
+
+
+[[release-notes-4.4.1]]
+==== 4.4.1 - 2024/02/06
+
+[float]
+===== Bug fixes
+
+* Add support for <<esm,instrumentation of ES module-using (ESM) code>> with
+  Node.js versions matching `^18.19.0 || >=20.2.0`. Before this version of
+  the APM agent, ESM instrumentation was only supported for some *earlier*
+  Node.js versions. Changes in Node.js's ESM loader in v18.19.0 and v20 broke
+  earlier ESM support. ({issues}3784[#3784], {pull}3844[#3844])
+
+
+[[release-notes-4.4.0]]
+==== 4.4.0 - 2024/01/12
+
+*Known issue*: Using the APM agent's <<esm>> with Node.js *v18.19.0* is not
+supported in this version. Upgrade to APM agent version v4.5.0 or later, or use
+Node.js v18.18.1 or earlier.
+See https://github.com/elastic/apm-agent-nodejs/issues/3784 for details.
+
+[float]
+===== Features
+
+* Support `ELASTIC_APM_ACTIVATION_METHOD=K8S_ATTACH` (in addition to the
+  current `K8S` value) to indicate the agent is being started by
+  apm-k8s-attacher.  Newer releases of apm-k8s-attacher will be using this
+  value (to have a common value used between APM agents).
+
+[float]
+===== Bug fixes
+
+* Fix bug where `NODE_ENV` environment value was not used as a default for
+  the <<environment>> config setting. The bug was introduced in v4.2.0.
+  ({issues}3807[#3807])
+
+* Improve Fastify instrumentation to no longer cause the https://fastify.dev/docs/latest/Reference/Warnings/#FSTDEP017[`FSTDEP017`]
+  and https://fastify.dev/docs/latest/Reference/Warnings/#FSTDEP018[`FSTDEP018`]
+  deprecation warnings. ({pull}3814[#3814])
+
+
+[[release-notes-4.3.0]]
+==== 4.3.0 - 2023/12/05
+
+*Known issue*: Using the APM agent's <<esm>> with Node.js *v18.19.0* is not
+supported in this version. Upgrade to APM agent version v4.5.0 or later, or use
+Node.js v18.18.1 or earlier.
+See https://github.com/elastic/apm-agent-nodejs/issues/3784 for details.
+
+[float]
+===== Features
+
+* Add the <<apm-client-headers>> config option, to allow adding custom headers
+  to HTTP requests made to APM server by the APM agent. ({issues}3759[#3759])
+
+[float]
+===== Bug fixes
+
+* Fix the dependency version range for `@elastic/ecs-pino-format`.
+  ({issues}3774[#3774])
+
+[float]
+===== Chores
+
+* Skip undici tests for `undici` `>=5.28.0` and NodeJS `<14.18.0`.
+  ({pull}3755[#3755])
+
+* Change the log level of `Sending error to Elastic APM: ...` from `info` to
+  `debug`. There is no need to clutter the log output with this message.
+  ({issues}3748[#3748])
+
+* Explicitly mark this package as being of type="commonjs". The experimental
+  `node --experimental-default-type=module ...` option
+  https://nodejs.org/en/blog/release/v20.10.0#--experimental-default-type-flag-to-flip-module-defaults[added in Node.js v20.10.0]
+  means that a default to "commonjs" isn't guaranteed.
+
+
+[[release-notes-4.2.0]]
+==== 4.2.0 - 2023/11/23
 
 [float]
 ===== Breaking changes
+
+* Drop support for next@11. Next.js instrumentation support is currently in
+  technical preview, so it is not considered a semver-major change to drop
+  support for this old version of next. ({pull}3664[#3664])
+
+[float]
+===== Features
+
+* Add <<apm-get-service-version>>, <<apm-get-service-environment>>, and
+  <<apm-get-service-node-name>>. These are intended for use by
+  {ecs-logging-nodejs-ref}/intro.html[ecs-logging-nodejs formatting packages].
+  See <https://github.com/elastic/ecs-logging-nodejs/pull/152>.
+  ({issues}3195[#3195])
+
+* Add knex@3 instrumentation. ({pull}3659[#3659])
+
+* Update <<opentelemetry-bridge>> support to `@opentelemetry/api` version 1.7.0.
+
+[float]
+===== Bug fixes
+
+* Fix `mongodb` instrumentation to avoid loosing context when multiple cursors
+  are running concurrently. ({issues}3161[#3161])
+
+* Set `mongodb` span's outcome according to the result of the command being traced.
+  ({pull}3695[#3695])
+
+* Fix `@aws-sdk/client-sqs` instrumentation which was failing for `SendMessageBatch`
+  command when any of the entities does not contain `MessageAttributes`.
+  ({issues}3746[#3746])
+
+
+[[release-notes-4.1.0]]
+==== 4.1.0 - 2023/10/09
+
+[float]
+===== Features
+
+* Update <<opentelemetry-bridge>> support to `@opentelemetry/api` version 1.6.0.
+  {pull}3622[#3622]
+
+* Add support for `@aws-sdk/client-dynamodb`, one of the AWS SDK v3 clients.
+  ({issues}2958[#2958])
+
+* Add support for `@aws-sdk/client-sns`, one of the AWS SDK v3 clients.
+  ({issues}2956[#2956])
+
+* Add support for `@aws-sdk/client-sqs`, one of the AWS SDK v3 clients.
+  ({issues}2957[#2957])
+
+* Fixes for some values of the <<disable-instrumentations>> config setting.
+  "redis" will now properly disable instrumentation for redis@4.
+  "next" will propertly disable all Next.js instrumentation.
+  ({pull}3658[#3658])
+
+[float]
+===== Bug fixes
+
+* Changes to cloud metadata collection for Google Cloud (GCP). Most notably
+  the `cloud.project.id` field is now the `project-id` from
+  https://cloud.google.com/compute/docs/metadata/default-metadata-values#project_metadata
+  rather than the `numeric-project-id`. This matches the value produced by
+  Elastic Beats (like filebeat). {issues}3614[#3614]
+
+
+[[release-notes-4.0.0]]
+==== 4.0.0 - 2023/09/07
+
+See the <<upgrade-to-v4>> guide.
+
+[float]
+===== Breaking changes
+
+* Set the new minimum supported Node.js to version 14.17.0.
+  Users of earlier Node.js versions can use elastic-apm-node v3.x, which
+  supports back to Node.js v8.6.
+
+* Ignore a `timer` option passed to `startTransaction()` and `startSpan()` APIs.
+  This option was never documented. It would be surprising if any user is
+  impacted by this.
+
+* Remove long deprecated support for the `ELASTIC_APM_`-prefixed environment
+  variables for the <<kubernetes-node-name,Kubernetes config options>>. For
+  example, one must use `KUBERNETES_POD_NAME` and not
+  `ELASTIC_APM_KUBERNETES_POD_NAME`. ({issues}2661[#2661])
+
+* The config option `filterHttpHeaders` is now _removed_. ({pull}3539[#3539])
+
+* Remove the deprecated `span.toString()` and `transaction.toString()` APIs.
+  See <<v4-api-to-string,the upgrading doc>> for details. ({issues}2348[#2348])
+
+* Remove instrumentation support for the old 'hapi' package -- the current
+  '@hapi/hapi' package is still instrumented. ({issues}2691[#2691])
+
+* Change `apm.startTransaction()` api to return a noop transaction instead of
+  null, if the agent is not yet started. ({issues}2429[#2429])
+
+* Drop support for the obsolete "patch" context manager, i.e. the
+  `contextManager: "patch"` config option. This was a limited async context
+  management that predated the preferred `AsyncLocalStorage` core Node.js
+  mechanism for context tracking. It was deprecated in v3.37.0.  As well, the
+  related and deprecated `asyncHooks` config option has been removed.
+  ({issues}3529[#3529])
+
+* Remove the `logUncaughtExceptions` config option.
+  See <<v4-config-options,Upgrading to v4>> for details.
+  ({issues}2412[#2412])
+
+* Remove `transaction.subtype` and `transaction.action` properties from API.
+  This also impacts <<apm-start-transaction>> and `transaction.setType(...)`,
+  both of which now no longer accept `subtype` and `action` parameters.
+  These two properties were deprecated in v3.25.0.
+  ({issues}3557[#3557])
+
+* Remove support for the erroneous `ELASTIC_SANITIZE_FIELD_NAMES` and
+  `ELASTIC_IGNORE_MESSAGE_QUEUES` config environment variables. The correct env
+  vars are `ELASTIC_APM_SANITIZE_FIELD_NAMES` and
+  `ELASTIC_APM_IGNORE_MESSAGE_QUEUES`, respectively, and were supported starting
+  in v3.36.0.
+
+[float]
+===== Features
+
+* The `apm.destroy()` method is now async. Almost no users should need to use
+  this method. However, if used, to be sure to wait for APM agent shutdown to
+  be complete, one can now `await apm.destroy()`. ({issues}3222[#3222])
+
+* Support instrumenting `mongodb` v6. ({pull}3596[#3596])
+
+[float]
+===== Bug fixes
+
+* Fix instrumentation of `mongodb` to avoid multiple command handler
+  registrations when client is created via `MongoClient.connect` static
+  method. ({pull}3586[#3586])
+
+[float]
+===== Chores
+
+* Add a warning message when a duration or size config option is provided
+  without units. ({issues}2121[#2121])
+
+* Change default value of `useElasticTraceparentHeader` config option to `false`.
+  This means that for outgoing HTTP requests, the APM agent will no longer add the
+  `elastic-apm-traceparent` header. This vendor-specific header was used in the past
+  while the https://w3c.github.io/trace-context/[W3C trace-context] spec was still
+  in development. Now that it is in wide use, the `elastic-apm-traceparent` header is
+  only useful for interaction with very old Elastic APM agents.
+
+* Add default ports into `context.service.target.name` for HTTP spans conforming to the
+  spec update done in https://github.com/elastic/apm/pull/700 ({pull}3590[#3590])
+
+
+[[release-notes-3.x]]
+=== Node.js Agent version 3.x
+
+NOTE: "3.x" releases are now maintenance releases.
+See https://www.elastic.co/guide/en/apm/agent/nodejs/3.x/release-notes-3.x.html[the 3.x release notes in the "3.x" branch]
+for the most recent 3.x releases. The 3.x branch will be maintained until
+2024-03-07 (6 months after the 4.0.0 release).
+
+
+[[release-notes-3.49.1]]
+==== 3.49.1 - 2023/08/09
+
+[float]
+===== Bug fixes
+
+* Upgrade import-in-the-middle dependency to v1.4.2 to fix a vulnerability
+  (https://github.com/DataDog/import-in-the-middle/security/advisories/GHSA-5r27-rw8r-7967[CVE-2023-38704]).
+  Note: This dependency is only used by elastic-apm-node when using the
+  <<esm,experimental ESM support>>. ({pull}3569[#3569])
+
+[float]
+===== Chores
+
+* Add debug logging for 4xx responses from APM server when polling for
+  central config. This is based on https://github.com/elastic/apm-nodejs-http-client/pull/182
+  by @linjunpop.
+
+
+[[release-notes-3.49.0]]
+==== 3.49.0 - 2023/08/03
+
+[float]
+===== Bug fixes
+
+* Fix ESM support: the "loader.mjs" file was accidentally not included in
+  the published package in v3.48.0. ({pull}3534[#3534])
+
+* Fix instrumentation of `@aws-sdk/client-s3` from v3.378.0 and up. The new
+  version requires `@smithy/smithy-client` v2.0.1 and the agent was
+  instrumenting it within the semver range '>=1 <2'. ({issues}3523[#3523])
+
+* Fix wrapping of `http.request()` for node v18.17.0. Before this change, a
+  call with a non-Function callback -- `http.request(urlString, {}, 'this-is-not-a-cb-function')`
+  -- would accidentally *not* fail because of the agent's instrumentation.
+  ({pull}3511[#3511])
+
+* Fix tedious instrumentation to recognize "connection.prepare()" usage in
+  tedious@16.2.0 and later. ({pull}3470[#3470])
+
+[float]
+===== Chores
+
+* Add min node verison in `tav.json` to generate lighter matrix for TAV commands.
+  ({pull}3531[#3531])
+
+* Inline the `elastic-apm-http-client` package code into this repo.
+  ({issues}3506[#3506])
+
+
+[[release-notes-3.48.0]]
+==== 3.48.0 - 2023/07/07
+
+*Known issue*: You must upgrade to 3.49.0 or later for the ESM support
+described below to work, because the "loader.mjs" file was accidentally not
+published.
 
 [float]
 ===== Features
@@ -83,9 +624,6 @@ See <<esm>> for full details.
 
 * Fix a possible crash when using `getSignedUrl()` from `@aws-sdk/s3-request-presigner`
   due to a bug in `@aws-sdk/client-s3` instrumentation. ({issues}3464[#3464])
-
-[float]
-===== Chores
 
 
 [[release-notes-3.47.0]]
@@ -166,7 +704,7 @@ in a Worker will *not* start the APM agent. Instead, one must use:
 [float]
 ===== Chores
 
-* The config option <<filter-http-headers, filterHttpHeaders>> is now *deprecated*. It will be
+* The config option `filterHttpHeaders` is now *deprecated*. It will be
   removed in a future major version. ({pull}3333[#3333])
 
 * Add cookie map in transactions' request context and redact cookie header ({pull}3322[#3322])
@@ -547,7 +1085,7 @@ paths are considered for request body capture. ({pull}2873[#2873])
 +
 This also adds a new <<context-manager,`contextManager`>> configuration option
 to control which mechanism the agent uses for run-context tracking. It replaces
-the, now deprecated, <<async-hooks,`asyncHooks`>> configuration option. If
+the, now deprecated, `asyncHooks` configuration option. If
 you experience problems with the new AsyncLocalStorage-based tracking, you can
 restore the older behavior with `contextManager: "asynchooks"`.
 
@@ -1184,9 +1722,8 @@ added to multiple events.
   of (re)implementing Lambda support ({pull}2363[#2363]). Some fixes for better
   flushing of data at the end of a Lambda invocation.
 
-* <<span-to-string,`span.toString()`>> and <<transaction-to-string,`transaction.toString()`>>
-  have been *deprecated*. The exact string output may change in v4 of the
-  agent.
+* `span.toString()` and `transaction.toString()` have been *deprecated*. The
+  exact string output may change in v4 of the agent.
 
 * Add `Span.ids` and `Transaction.ids` to TypeScript types. ({pull}2347[#2347])
 

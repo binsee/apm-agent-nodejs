@@ -45,49 +45,21 @@ setup_env () {
 run_test_suite () {
   npm run test:deps
 
-  # If running in CI, then output .tap files and covert them to JUnit
-  # format for test reporting.
-  local testArgs=""
-  if [[ -n "$CI" ]]; then
-    rm -rf ./test_output
-    mkdir ./test_output
-    testArgs="-o ./test_output"
-  fi
-
-  if [[ -n "$COVERAGE" ]]; then
-    nyc node test/test.js $testArgs
-  else
-    node test/test.js $testArgs
-  fi
-
-  if [[ -n "$CI" ]]; then
-    ls test_output/*.tap | while read f; do cat $f | ./node_modules/.bin/tap-junit > $f.junit.xml; done
-  fi
+  node test/test.js
 
   if [[ $major_node_version -gt 14 ]] || [[ $major_node_version -eq 14 && $minor_node_version -ge 17 ]]; then
     npm run test:types # typescript@5.1.0 engines.node is >=14.17
   fi
-  if [[ $major_node_version -ne 13 ]] || [[ $minor_node_version -gt 1 ]]; then
-    npm run test:babel
-  fi
+  npm run test:babel
 }
 
 major_node_version=`node --version | cut -d . -f1 | cut -d v -f2`
 minor_node_version=`node --version | cut -d . -f2`
 
-if [[ $major_node_version -eq 8 ]] && [[ $minor_node_version -lt 8 ]]; then
-  export NODE_OPTIONS="$NODE_OPTIONS --expose-http2"
-fi
-
 # "test/instrumentation/modules/http2.js" fails if the OpenSSL SECLEVEL=2,
 # which is the case in the node:16 Docker image and could be in other
 # environments. Here we explicitly set it to SECLEVEL=0 for testing.
-#
-# Skip for node v8 because it results in this warning:
-#   openssl config failed: error:25066067:DSO support routines:DLFCN_LOAD:could not load the shared library
-if [[ $major_node_version -gt 8 ]]; then
-  export NODE_OPTIONS="$NODE_OPTIONS --openssl-config=$(pwd)/test/openssl-config-for-testing.cnf"
-fi
+export NODE_OPTIONS="$NODE_OPTIONS --openssl-config=$(pwd)/test/openssl-config-for-testing.cnf"
 
 if [[ "$CI" || "$1" == "none" ]]
 then
@@ -118,7 +90,7 @@ then
 else
   # No arguments was given. Let's just assume that the user wants to
   # spin up all dependencies inside Docker and run the tests locally
-  services=$(docker-compose  -f ./test/docker-compose.yml  config --services)
+  services=$(docker compose  -f ./test/docker-compose.yml  config --services)
 fi
 
 service_arr=( $services )
@@ -134,11 +106,11 @@ then
 elif [[ $healthy -lt $expected_healthy || $containers -lt $expected_containers ]]
 then
   finish () {
-    docker-compose -f ./test/docker-compose.yml down
+    docker compose -f ./test/docker-compose.yml down
   }
   trap finish EXIT
 
-  docker-compose -f ./test/docker-compose.yml up -d $services
+  docker compose -f ./test/docker-compose.yml up -d $services
   wait_for_healthy
 fi
 

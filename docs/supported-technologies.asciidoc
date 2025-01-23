@@ -20,13 +20,15 @@ Versions of Node.js past their end-of-life date are not supported.
 
 image::./images/node_release_schedule.svg[Node.js release schedule]
 
-The current APM agent version (3.x) works with Node.js versions back to v8.6. We will only break support for older Node.js versions with a major version release of the APM agent.
+APM agent 4.x releases work with Node.js versions 14.17.0 and later.
+APM agent 3.x maintenance releases work with Node.js versions 8.6 and later.
+We will only break support for older Node.js versions with a major version release of the APM agent.
 
 [float]
 [[compatibility-esm]]
 === ECMAScript Modules (ESM)
 
-Beginning with version REPLACEME, the Elastic APM Node.js agent includes
+Beginning with version v3.48.0, the Elastic APM Node.js agent includes
 _limited and experimental_ support for instrumenting
 https://nodejs.org/api/esm.html#modules-ecmascript-modules[ECMAScript module imports],
 i.e. modules that are loaded via `import ...` statements and `import('...')` (dynamic import).
@@ -61,13 +63,12 @@ These are the frameworks that we officially support:
 |=======================================================================
 | Framework             | Version | Note
 | <<lambda,AWS Lambda>> | N/A |
-| <<azure-functions,Azure Functions>> | ~4 | See https://learn.microsoft.com/en-ca/azure/azure-functions/set-runtime-version[the guide on Azure Functions runtime versions].
+| <<azure-functions,Azure Functions>> | v3, v4 | https://learn.microsoft.com/en-us/azure/azure-functions/functions-node-upgrade-v4[Node.js programming model v3 and v4]
 | <<express,Express>>   | ^4.0.0 |
 | <<fastify,Fastify>>   | >=1.0.0 | See also https://www.fastify.io/docs/latest/Reference/LTS/[Fastify's own LTS documentation]
 | <<hapi,@hapi/hapi>>   | >=17.9.0 <22.0.0 |
-| <<hapi,hapi>>         | >=9.0.0 <19.0.0 | Deprecated. No longer tested.
-| <<koa,Koa>> via koa-router or @koa/router | >=5.2.0 <13.0.0 | Koa doesn't have a built in router, so we can't support Koa directly since we rely on router information for full support. We currently support the most popular Koa router called https://github.com/koajs/koa-router[koa-router].
-| <<nextjs,Next.js>>    | >=11.1.0 <13.3.0 | (Technical Preview) This instruments Next.js routing to name transactions for incoming HTTP transactions; and reports errors in user pages. It supports the Next.js production server (`next start`) and development server (`next dev`). See the <<nextjs,Getting Started document>>.
+| <<koa,Koa>> via koa-router or @koa/router | >=5.2.0 <14.0.0 | Koa doesn't have a built in router, so we can't support Koa directly since we rely on router information for full support. We currently support the most popular Koa router called https://github.com/koajs/koa-router[koa-router].
+| <<nextjs,Next.js>>    | >=12.0.0 <13.3.0 | (Technical Preview) This instruments Next.js routing to name transactions for incoming HTTP transactions; and reports errors in user pages. It supports the Next.js production server (`next start`) and development server (`next dev`). See the <<nextjs,Getting Started document>>.
 | <<restify,Restify>>   | >=5.2.0 <12.0.0 |
 |=======================================================================
 
@@ -83,7 +84,7 @@ Metrics API and Metrics SDK to allow
 [options="header"]
 |=======================================================================
 | Framework | Version
-| <<opentelemetry-bridge,@opentelemetry/api>> | >=1.0.0 <1.5.0
+| <<opentelemetry-bridge,@opentelemetry/api>> | >=1.0.0 <1.10.0
 | https://www.npmjs.com/package/@opentelemetry/sdk-metrics[@opentelemetry/sdk-metrics] | >=1.11.0 <2
 |=======================================================================
 
@@ -114,6 +115,9 @@ The Node.js agent will automatically instrument the following modules to give yo
 |Module |Version |Note
 |https://www.npmjs.com/package/aws-sdk[aws-sdk] |>=2.858.0 <3 |Will instrument SQS send/receive/delete messages, all S3 methods, all DynamoDB methods, and the SNS publish method
 |https://www.npmjs.com/package/@aws-sdk/client-s3[@aws-sdk/client-s3] |>=3.15.0 <4 |Will instrument all S3 methods
+|https://www.npmjs.com/package/@aws-sdk/client-s3[@aws-sdk/client-sns] |>=3.15.0 <4 |Will instrument the SNS publish method
+|https://www.npmjs.com/package/@aws-sdk/client-s3[@aws-sdk/client-sqs] |>=3.15.0 <4 |Will instrument SQS send/receive/delete messages
+|https://www.npmjs.com/package/@aws-sdk/client-dynamodb[@aws-sdk/client-dynamodb] |>=3.15.0 <4 |Will instrument all DynamoDB methods
 |https://www.npmjs.com/package/cassandra-driver[cassandra-driver] |>=3.0.0 <5 |Will instrument all queries
 |https://www.npmjs.com/package/elasticsearch[elasticsearch] |>=8.0.0 |Will instrument all queries
 |https://www.npmjs.com/package/@elastic/elasticsearch[@elastic/elasticsearch] |>=7.0.0 <9.0.0 |Will instrument all queries
@@ -127,16 +131,18 @@ The Node.js agent will automatically instrument the following modules to give yo
 A lot of higher level MongoDB modules use mongodb-core,
 so those should be supported as well.
 |https://www.npmjs.com/package/mongodb[mongodb] |>=2.0.0 <3.3.0 |Supported via mongodb-core
-|https://www.npmjs.com/package/mongodb[mongodb] |>=3.3.0 <6 |Will instrument all queries
+|https://www.npmjs.com/package/mongodb[mongodb] |>=3.3.0 <7 |Will instrument all queries
 |https://www.npmjs.com/package/mongojs[mongojs] |>=1.0.0 <2.7.0 |Supported via mongodb-core
 |https://www.npmjs.com/package/mongoose[mongoose] |>=4.0.0 <5.7.0 |Supported via mongodb-core
+|https://www.npmjs.com/package/mongoose[mongoose] |>=5.7.0 <8 |Supported via mongodb
 |https://www.npmjs.com/package/mysql[mysql] |^2.0.0 |Will instrument all queries
 |https://www.npmjs.com/package/mysql2[mysql2] |>=1.0.0 <4.0.0 |Will instrument all queries
 |https://www.npmjs.com/package/pg[pg] |>=4.0.0 <9.0.0 |Will instrument all queries
 |https://www.npmjs.com/package/redis[redis] |>=2.0.0 <5.0.0 |Will instrument all queries
-|https://www.npmjs.com/package/tedious[tedious] |>=1.9 <17.0.0 | (Excluding v4.0.0.) Will instrument all queries
-|https://www.npmjs.com/package/undici[undici] | >=4.7.1 <6 | Will instrument undici HTTP requests, except HTTP CONNECT. Requires node v14.17.0 or later, or the user to have installed the https://www.npmjs.com/package/diagnostics_channel['diagnostics_channel' polyfill].
+|https://www.npmjs.com/package/tedious[tedious] |>=1.9 <20.0.0 | (Excluding v4.0.0.) Will instrument all queries
+|https://www.npmjs.com/package/undici[undici] | >=4.7.1 <8 | Will instrument undici HTTP requests, except HTTP CONNECT. Requires node v14.17.0 or later, or the user to have installed the https://www.npmjs.com/package/diagnostics_channel['diagnostics_channel' polyfill].
 |https://www.npmjs.com/package/ws[ws] |>=1.0.0 <8.0.0 |Will instrument outgoing WebSocket messages
+|https://www.npmjs.com/package/kafkajs[kafkajs] |>=2.0.0 <3.0.0 |Will instrument all send methods for producers and message and batch processing for consumers.
 |=======================================================================
 
 [float]
@@ -162,7 +168,7 @@ please create a new topic in the https://discuss.elastic.co/c/apm[Elastic APM di
 [options="header"]
 |=================================================
 |Module |Version |Note
-|https://www.npmjs.com/package/knex[knex] |>=0.10.0 <3.0.0 | Provides better span stack traces for 'pg' and 'mysql' spans. Instrumentation of Knex >=0.95.0 is not supported when using the deprecated <<context-manager,`contextManager=patch`>> configuration option.
+|https://www.npmjs.com/package/knex[knex] |>=0.10.0 <4.0.0 | Provides better span stack traces for 'pg' and 'mysql' spans.
 |=================================================
 
 [float]
