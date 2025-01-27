@@ -31,18 +31,21 @@ services:
       retries: 30
 
   mssql:
-    image: mcr.microsoft.com/mssql/server
+    # Tags listed at https://hub.docker.com/r/microsoft/mssql-server
+    # Docs: https://learn.microsoft.com/en-us/sql/linux/quickstart-install-connect-docker
+    image: mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04
+    platform: linux/amd64
     environment:
       - ACCEPT_EULA=Y
-      - SA_PASSWORD=Very(!)Secure
+      - MSSQL_SA_PASSWORD=Very(!)Secure
       - MSSQL_PID=Developer
     ports:
       - "1433:1433"
     volumes:
       - nodemssqldata:/var/opt/mssql
     healthcheck:
-      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "mssql", "-U", "sa", "-P", "Very(!)Secure", "-Q", "select 1"]
-      interval: 30s
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-C", "-S", "mssql", "-U", "sa", "-P", "Very(!)Secure", "-Q", "select 1"]
+      interval: 10s
       timeout: 10s
       retries: 5
 
@@ -119,8 +122,16 @@ services:
 
   localstack:
     # https://hub.docker.com/r/localstack/localstack/tags
-    image: localstack/localstack:2.1.0
+    image: localstack/localstack:3.0.0
     environment:
+      # Cannot use the default `localhost.localstack.cloud:4566` which, IIUC,
+      # relies on reaching out the external DNS for resolution.
+      # https://docs.localstack.cloud/getting-started/faq/#is-using-localhostlocalstackcloud4566-to-set-as-the-endpoint-for-aws-services-recommended
+      - LOCALSTACK_HOST=localstack:4566
+      # Cannot use the default 'SQS_ENDPOINT_STRATEGY=standard' which relies on
+      # `*.localhost.localstack.cloud` resolution.
+      # https://docs.localstack.cloud/user-guide/aws/sqs/#queue-urls
+      - SQS_ENDPOINT_STRATEGY=path
       - DATA_DIR=/var/lib/localstack
     ports:
       - "4566:4566"
@@ -131,6 +142,48 @@ services:
       retries: 5
     volumes:
       - nodelocalstackdata:/var/lib/localstack
+
+  zookeeper:
+    # https://hub.docker.com/r/bitnami/zookeeper/tags
+    image: bitnami/zookeeper:3.9.1
+    ports:
+      - "2181:2181"
+    volumes:
+      - nodezookeeperdata:/bitnami
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    healthcheck:
+      # Using 'srvr' instead of the more common 'ruok' because this bitnami
+      # image does not have 'ruok' on the '4lw.commands.whitelist' in zoo.cfg.
+      test: ["CMD-SHELL", "echo srvr | nc -w 2 localhost 2181"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    # https://hub.docker.com/r/bitnami/kafka/tags
+    image: bitnami/kafka:3.3.2
+    ports:
+      - "9093:9093"
+    volumes:
+      - nodekafkadata:/var/lib/kafka/data
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=CLIENT://:9092,EXTERNAL://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:9092,EXTERNAL://kafka:9093
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=CLIENT
+      - KAFKA_CFG_DELETE_TOPIC_ENABLE=true
+    depends_on:
+      - zookeeper
+    healthcheck:
+      # Kafka healthcheck ideas from https://github.com/wurstmeister/kafka-docker/issues/167
+      test: kafka-cluster.sh cluster-id --bootstrap-server localhost:9092 || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 volumes:
   nodepgdata:
@@ -146,4 +199,8 @@ volumes:
   nodecassandradata:
     driver: local
   nodelocalstackdata:
+    driver: local
+  nodekafkadata:
+    driver: local
+  nodezookeeperdata:
     driver: local
