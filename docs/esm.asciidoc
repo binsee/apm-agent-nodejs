@@ -6,7 +6,7 @@ endif::[]
 [[esm]]
 == ECMAScript module support
 
-NOTE: ECMAScript module support is currently incomplete and experimental. It was added in version REPLACEME.
+NOTE: ECMAScript module support is currently incomplete and experimental. It was added in version v3.48.0.
 
 The Elastic APM Node.js agent includes _limited and experimental_ support for auto-instrumentation of https://nodejs.org/api/esm.html#modules-ecmascript-modules[ECMAScript modules] (ESM) -- i.e. modules loaded via the `import ...` statement or the `import(...)` expression.  Support is based on the experimental https://nodejs.org/api/esm.html#loaders[Node.js Loaders API], which requires passing the `--experimental-loader` option to node.
 
@@ -36,7 +36,7 @@ when invoked as follows:
 export ELASTIC_APM_SERVER_URL='https://...apm...cloud.es.io:443'
 export ELASTIC_APM_SECRET_TOKEN='...'
 node -r elastic-apm-node/start.js \
-  --experimental-loader=elastic-apm-node/loader.mjs' \
+  --experimental-loader=elastic-apm-node/loader.mjs \
   node server.mjs
 ----
 
@@ -70,7 +70,8 @@ As well, the APM agent must also be separately *started* -- for example via `--r
 
 Automatic instrumentation of ES modules is based on the experimental Node.js Loaders API. ESM support in the Elastic APM Node.js agent will remain *experimental* while the Loaders API is experimental.
 
-ESM auto-instrumentation is only supported for Node.js versions that match *`^12.20.0 || ^14.13.1 || ^16.0.0 || ^18.1.0 <20`*. Notably, in the current APM agent version, this _excludes Node.js v20_ because of changes in the Loaders API. The behavior when using `node --experimental-loader=elastic-apm-node/loader.mjs` with earlier Node.js versions is undefined and unsupported.
+ESM auto-instrumentation is only supported for Node.js versions that match *`^12.20.0 || ^14.13.1 || ^16.0.0 || ^18.1.0 || >=20.2.0`*.
+The behavior when using `node --experimental-loader=elastic-apm-node/loader.mjs` with earlier Node.js versions is undefined and unsupported.
 
 
 [float]
@@ -81,15 +82,19 @@ Automatic instrumentation of ES modules is currently limited as described here. 
 
 [options="header"]
 |=======================================================================
-| Module               | Version     | Note |
-| `@aws-sdk/client-s3` | >=3.15.0 <4 | |
-| `express`            | ^4.0.0      | |
-| `fastify`            | >=3.5.0     | |
-| `http`               |             | See <<esm-compat-node>> above. |
-| `https`              |             | See <<esm-compat-node>> above. |
-| `ioredis`            | >=2 <6      | |
-| `knex`               | >=0.20.0 <3 | Also, only with pg@8. |
-| `pg`                 | ^8          | |
+| Module                     | Version     | Note |
+| `@aws-sdk/client-dynamodb` | >=3.15.0 <4 | |
+| `@aws-sdk/client-s3`       | >=3.15.0 <4 | |
+| `@aws-sdk/client-sns`      | >=3.15.0 <4 | |
+| `@aws-sdk/client-sqs`      | >=3.15.0 <4 | |
+| `cassandra-driver`         | >=3.0.0 <5  | |
+| `express`                  | ^4.0.0      | |
+| `fastify`                  | >=3.5.0     | |
+| `http`                     |             | See <<esm-compat-node>> above. |
+| `https`                    |             | See <<esm-compat-node>> above. |
+| `ioredis`                  | >=2 <6      | |
+| `knex`                     | >=0.20.0 <4 | Also, only with pg@8. |
+| `pg`                       | ^8          | |
 |=======================================================================
 
 
