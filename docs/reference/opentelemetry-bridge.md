@@ -15,6 +15,9 @@ applies_to:
 Integration with the OpenTelemetry Tracing API was added as experimental in v3.34.0. Integration with the OpenTelemetry Metrics API was added as experimental in v3.45.0.
 ::::
 
+::::{note}
+For OpenTelemetry-based observability, consider using [Elastic's OTel-native Node.js SDK (`@elastic/opentelemetry-node`)](https://www.elastic.co/docs/reference/opentelemetry/edot-sdks/node). Using an OTel-native SDK provides the full functionality of the OpenTelemetry ecosystem, without the limitations in this experimental bridge.
+::::
 
 The Elastic APM OpenTelemetry bridge allows one to use the vendor-neutral [OpenTelemetry API](https://opentelemetry.io/docs/instrumentation/js/) ([`@opentelemetry/api`](https://www.npmjs.com/package/@opentelemetry/api)) in your code, and have the Elastic Node.js APM agent handle those API calls. This allows one to use the Elastic APM agent for tracing and metrics without any vendor lock-in to the APM agent’s own [public API](/reference/api.md) when adding manual tracing or custom metrics.
 
@@ -32,14 +35,13 @@ npm install --save elastic-apm-node @opentelemetry/api
 ```bash
 export ELASTIC_APM_SERVER_URL='<url of your APM server>'
 export ELASTIC_APM_SECRET_TOKEN='<secret token for your APM server>'  <1>
-export ELASTIC_APM_OPENTELEMETRY_BRIDGE_ENABLED=true                  <2>
-export NODE_OPTIONS='-r elastic-apm-node/start.js'                    <3>
+export ELASTIC_APM_OPENTELEMETRY_BRIDGE_ENABLED=true
+export NODE_OPTIONS='-r elastic-apm-node/start.js'                    <2>
 node my-app.js
 ```
 
 1. Or use ELASTIC_APM_API_KEY=
-2. Future versions may drop this config var and enable usage of the tracing API by default.
-3. Tell node to preload and start the APM agent.
+2. Tell node to preload and start the APM agent.
 
 Or, alternatively, you can configure and start the APM agent at the top of your application code:
 
@@ -59,21 +61,21 @@ See [the full APM agent configuration reference](/reference/configuration.md) fo
 ③ Finally, you can use the [OpenTelemetry API](https://open-telemetry.github.io/opentelemetry-js/modules/_opentelemetry_api.html) for any manual tracing in your code. For example, the following script uses [Tracer#startActiveSpan()](https://open-telemetry.github.io/opentelemetry-js/interfaces/_opentelemetry_api._opentelemetry_api.Tracer.html#startactivespan) to trace an outgoing HTTPS request:
 
 ```js
-const https = require('https')
-const otel = require('@opentelemetry/api')
-const tracer = otel.trace.getTracer('trace-https-request')
+const https = require('https');
+const otel = require('@opentelemetry/api');
+const tracer = otel.trace.getTracer('trace-https-request');
 
-tracer.startActiveSpan('makeRequest', span => {
-  https.get('https://httpstat.us/200', (response) => {
-    console.log('STATUS:', response.statusCode)
-    const body = []
-    response.on('data', (chunk) => body.push(chunk))
+tracer.startActiveSpan('makeRequest', (span) => {
+  https.get('https://www.google.com/', (response) => {
+    console.log('STATUS:', response.statusCode);
+    const body = [];
+    response.on('data', (chunk) => body.push(chunk));
     response.on('end', () => {
-      console.log('BODY:', body.toString())
-      span.end()
-    })
-  })
-})
+      console.log('BODY: "%s..."', body.toString().slice(0, 80));
+      span.end();
+    });
+  });
+});
 ```
 
 The APM agent source code repository includes [some examples using the OpenTelemetry tracing bridge](https://github.com/elastic/apm-agent-nodejs/tree/main/examples/opentelemetry-bridge).
@@ -92,6 +94,7 @@ npm install --save elastic-apm-node @opentelemetry/api
 ```bash
 export ELASTIC_APM_SERVER_URL='<url of your APM server>'
 export ELASTIC_APM_SECRET_TOKEN='<secret token for your APM server>'  # or ELASTIC_APM_API_KEY=...
+export ELASTIC_APM_OPENTELEMETRY_BRIDGE_ENABLED=true
 export NODE_OPTIONS='-r elastic-apm-node/start.js'  # Tell node to preload and start the APM agent
 node my-app.js
 ```
@@ -100,22 +103,24 @@ node my-app.js
 
 ```js
 // otel-metrics-hello-world.js <1>
-const { createServer } = require('http')
-const otel = require('@opentelemetry/api')
+const { createServer } = require('http');
+const otel = require('@opentelemetry/api');
 
-const meter = otel.metrics.getMeter('my-meter')
-const numReqs = meter.createCounter('num_requests', { description: 'number of HTTP requests' })
+const meter = otel.metrics.getMeter('my-meter');
+const numReqs = meter.createCounter('num_requests', {
+  description: 'number of HTTP requests',
+});
 
 const server = createServer((req, res) => {
-  numReqs.add(1)
-  req.resume()
+  numReqs.add(1);
+  req.resume();
   req.on('end', () => {
-    res.end('pong\n')
-  })
-})
+    res.end('pong\n');
+  });
+});
 server.listen(3000, () => {
-  console.log('listening at http://127.0.0.1:3000/')
-})
+  console.log('listening at http://127.0.0.1:3000/');
+});
 ```
 
 1. The full example is [here](https://github.com/elastic/apm-agent-nodejs/blob/main/examples/opentelemetry-metrics/otel-metrics-hello-world.js).

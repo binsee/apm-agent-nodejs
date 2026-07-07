@@ -26,6 +26,27 @@ To check for security updates, go to [Security announcements for the Elastic sta
 %
 % ### Fixes [next-fixes]
 
+## Next [next]
+**Release date:** Month day, year
+
+### Features and enhancements [next-features-enhancements]
+
+
+### Fixes [next-fixes]
+
+* Update [*OpenTelemetry bridge*](/reference/opentelemetry-bridge.md) to use OTel SDK 2.x. [#5126](https://github.com/elastic/apm-agent-nodejs/pull/5126))
+  * **Possibly breaking for users of the OpenTelemetry bridge.**
+    This upgrades internal OpenTelemetry SDK dependencies from 1.x to 2.x,
+    which implies a [minimum supported Node.js version range of `^18.19.0 || >=20.6.0`](https://github.com/open-telemetry/opentelemetry-js/blob/main/doc/upgrade-to-2.x.md#-nodejs-supported-versions).
+    The (experimental) Elastic APM OpenTelemetry bridge will no longer work
+    for Node.js 14 and 16 users.
+  * The [`opentelemetryBridgeEnabled`](/reference/configuration.md#opentelemetry-bridge-enabled)
+    config setting **must now be set to true for OpenTelemetry metrics
+    integration**. Before this change, the metrics integration would accidentally
+    be enabled regardless of the opentelemetryBridgeEnabled setting.
+  * The `@opentelemetry/*` dependency updates include an upstream fix for [CVE-2026-54285](https://github.com/open-telemetry/opentelemetry-js/security/advisories/GHSA-8988-4f7v-96qf), though that vulnerability did not impact this package's usage.
+  * Thanks to [JoshElias](https://github.com/JoshElias) for an [earlier PR on which this PR was based](https://github.com/elastic/apm-agent-nodejs/pull/4933).
+
 ## 4.17.0 [4-17-0]
 **Release date:** Jun 30, 2026
 

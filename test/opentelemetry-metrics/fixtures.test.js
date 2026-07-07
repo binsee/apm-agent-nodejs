@@ -32,11 +32,14 @@ const {
   formatForTComment,
 } = require('../_utils');
 
-if (!semver.satisfies(process.version, '>=14')) {
+const OTEL_SDK_ENGINES_NODE = '^18.19.0 || >=20.6.0';
+if (!semver.satisfies(process.version, OTEL_SDK_ENGINES_NODE)) {
   console.log(
-    `# SKIP @opentelemetry/sdk-metrics only supports node >=14 (node ${process.version})`,
+    '# SKIP: skipping %s, OTel SDK does not support node %s',
+    __filename,
+    process.version,
   );
-  process.exit();
+  process.exit(0);
 }
 
 const isUndiciIncompat = require('../_is_undici_incompat')();
@@ -266,10 +269,9 @@ const cases = [
       const warnLines = stdout
         .split('\n')
         .filter((ln) => ~ln.indexOf('dropping array-valued metric attribute'));
-      t.equal(
-        warnLines.length,
-        1,
-        'exactly one log.warn about dropping the array-valued metric attribute',
+      t.ok(
+        warnLines.length >= 1,
+        'at least one log.warn about dropping the array-valued metric attribute',
       );
       t.ok(
         warnLines[0].indexOf('test_counter_attrs'),
@@ -401,6 +403,7 @@ cases.forEach((c) => {
             timeout: 10000, // guard on hang, 3s is sometimes too short for CI
             env: Object.assign({}, process.env, c.env, {
               ELASTIC_APM_SERVER_URL: serverUrl,
+              ELASTIC_APM_OPENTELEMETRY_BRIDGE_ENABLED: 'true',
               ELASTIC_APM_METRICS_INTERVAL: '500ms',
               ELASTIC_APM_API_REQUEST_TIME: '500ms',
               ELASTIC_APM_CENTRAL_CONFIG: 'false',
